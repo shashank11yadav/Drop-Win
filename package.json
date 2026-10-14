@@ -1,0 +1,36 @@
+{
+  "name": "drop-win",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A provably fair, play-money ball-drop game with a commit-reveal RNG and an in-browser verifier.",
+  "license": "MIT",
+  "author": "Shashank Yadav",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.64.1",
+    "@types/node": "24.19.2",
+    "eslint": "10.12.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "eslint-plugin-react-refresh": "0.5.7",
+    "globals": "17.13.0",
+    "prettier": "3.9.10",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.71.2",
+    "vitest": "5.0.4"
+  },
+  "scripts": {
+    "lint": "eslint . && prettier --check .",
+    "format": "prettier --write .",
+    "typecheck": "tsc -p tsconfig.json && npm run typecheck --workspaces --if-present",
+    "test": "vitest run",
+    "tables:check": "npm run tables:check -w @drop-win/fairness"
+  }
+}

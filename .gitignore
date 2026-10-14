@@ -1,0 +1,52 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+.vite/
+
+# Test output
+coverage/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# Local data (SQLite files written by the Node server)
+data/
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+*.db
+
+# Cloudflare
+.wrangler/
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+
+# Environment files (only the example is committed)
+.env
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Editors and OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Secrets that should never be committed
+*.pem
+*.key
