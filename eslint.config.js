@@ -42,8 +42,8 @@ export default defineConfig(
     },
   },
   {
-    // Command-line scripts and the Node entry point report to the terminal on purpose.
-    files: ['**/scripts/**/*.ts', 'apps/api/src/node.ts', 'scripts/**/*.{js,mjs}'],
+    // Command-line scripts and server entry points log to stdout/stderr on purpose.
+    files: ['**/scripts/**/*.ts', 'apps/api/src/node.ts', 'apps/api/worker/index.ts', 'scripts/**/*.{js,mjs}'],
     rules: { 'no-console': 'off' },
   },
   {
