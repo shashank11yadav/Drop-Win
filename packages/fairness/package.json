@@ -1,0 +1,15 @@
+{
+  "name": "@drop-win/fairness",
+  "version": "1.0.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "tables": "node scripts/tables.ts --write",
+    "tables:check": "node scripts/tables.ts --check",
+    "typecheck": "tsc -p tsconfig.json"
+  }
+}
