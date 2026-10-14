@@ -1,0 +1,33 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "drop-win",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "../web/dist",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  "durable_objects": {
+    "bindings": [{ "name": "PLAYERS", "class_name": "PlayerVault" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["PlayerVault"] }],
+  // Must match RATE_LIMITS in packages/contract/src/limits.ts (a test checks this).
+  // namespace_id only has to be unique within your Cloudflare account.
+  "ratelimits": [
+    { "name": "API_RATE_LIMIT", "namespace_id": "4101", "simple": { "limit": 300, "period": 60 } },
+    {
+      "name": "SESSION_RATE_LIMIT",
+      "namespace_id": "4102",
+      "simple": { "limit": 20, "period": 60 }
+    },
+    { "name": "BET_RATE_LIMIT", "namespace_id": "4103", "simple": { "limit": 40, "period": 10 } }
+  ],
+  // SESSION_SECRET is a secret: wrangler secret put SESSION_SECRET
+  "vars": {
+    "APP_ENV": "production",
+    "COOKIE_SAMESITE": "Strict",
+    "ALLOWED_ORIGINS": ""
+  },
+  "observability": { "enabled": true }
+}
