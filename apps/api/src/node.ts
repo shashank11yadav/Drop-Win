@@ -57,9 +57,14 @@ if (nodeEnv.WEB_DIST) {
   const headers = webSecurityHeaders();
   app.use('*', async (c, next) => {
     await next();
-    if (!c.req.path.startsWith('/api/')) {
-      for (const [name, value] of Object.entries(headers)) c.header(name, value);
-    }
+    if (c.req.path.startsWith('/api/')) return;
+    for (const [name, value] of Object.entries(headers)) c.header(name, value);
+    // Hashed files never change; everything else must be revalidated so a
+    // deploy is picked up on the next load.
+    c.header(
+      'Cache-Control',
+      c.req.path.startsWith('/assets/') ? 'public, max-age=31536000, immutable' : 'no-cache',
+    );
   });
   app.use('*', serveStatic({ root }));
   app.get('*', serveStatic({ root, path: 'index.html' }));
