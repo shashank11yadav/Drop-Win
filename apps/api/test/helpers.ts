@@ -1,4 +1,4 @@
-import { Ledger, type LedgerOptions } from '@drop-win/ledger';
+import { Ledger, type LedgerOptions, MemoryStore } from '@drop-win/ledger';
 import { createApp } from '../src/app.ts';
 import { loadConfig } from '../src/config.ts';
 import { openNodeSqlite, type NodeSqlite } from '../src/node-sqlite.ts';
@@ -19,7 +19,16 @@ export function makeLedger(options: LedgerOptions = {}): {
 }
 
 /** The same ledger on each kind of storage it runs on. */
-export const STORES = [{ name: 'sqlite', make: () => makeLedger() }] as const;
+export const STORES = [
+  { name: 'sqlite', make: () => makeLedger() },
+  {
+    name: 'memory',
+    make: () => {
+      const store = new MemoryStore();
+      return { store, ledger: new Ledger(store) };
+    },
+  },
+] as const;
 
 export function makeApp(
   options: { env?: Record<string, string>; limiter?: RateLimiter; ip?: string } = {},
