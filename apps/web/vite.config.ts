@@ -58,7 +58,9 @@ export default defineConfig(({ mode }) => {
   const pages = mode === 'pages';
   const browser = pages || mode === 'browser' || env['VITE_BACKEND'] === 'browser';
   const apiBase = browser ? '' : (env['VITE_API_BASE'] ?? '');
-  const port = Number(env['WEB_PORT'] ?? (browser ? 5310 : 5300));
+  // Unset, empty and non-numeric all fall back to the default port.
+  const port = Number(env['WEB_PORT']) || (browser ? 5310 : 5300);
+  const apiPort = Number(env['API_PORT']) || 5301;
   return {
     base: pages ? '/Drop-Win/' : '/',
     envDir: '../..',
@@ -70,7 +72,7 @@ export default defineConfig(({ mode }) => {
     server: {
       port,
       strictPort: true,
-      ...(browser ? {} : { proxy: { '/api': `http://127.0.0.1:${env['API_PORT'] ?? '5301'}` } }),
+      ...(browser ? {} : { proxy: { '/api': `http://127.0.0.1:${String(apiPort)}` } }),
     },
     preview: { port, strictPort: true },
     worker: { format: 'es' },
