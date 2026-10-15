@@ -72,7 +72,16 @@ export default defineConfig(({ mode }) => {
     server: {
       port,
       strictPort: true,
-      ...(browser ? {} : { proxy: { '/api': `http://127.0.0.1:${String(apiPort)}` } }),
+      ...(browser
+        ? {}
+        : {
+            proxy: {
+              // Keep the browser's Host header. The string shorthand rewrites it
+              // to the target, and the API's same-origin check then rejects
+              // every POST because Origin and Host no longer match.
+              '/api': { target: `http://127.0.0.1:${String(apiPort)}`, changeOrigin: false },
+            },
+          }),
     },
     preview: { port, strictPort: true },
     worker: { format: 'es' },
