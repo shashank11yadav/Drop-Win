@@ -5,6 +5,7 @@ import {
   IdempotencyKey,
   RotateSeedRequest,
 } from '@drop-win/contract';
+import { LEDGER_ERRORS, type LedgerError, type PlayerStore } from '@drop-win/ledger';
 import { type Context, Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { getSignedCookie, setSignedCookie } from 'hono/cookie';
@@ -14,7 +15,6 @@ import { secureHeaders } from 'hono/secure-headers';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import * as z from 'zod/mini';
 import type { AppConfig } from './config.ts';
-import type { LedgerError, PlayerStore } from './ledger.ts';
 import type { RateLimiter } from './rate-limit.ts';
 
 export interface AppDeps {
@@ -36,22 +36,6 @@ const COOKIE_MAX_AGE_SECONDS = 180 * 24 * 60 * 60;
 const MAX_BODY_BYTES = 2 * 1024;
 const PlayerId = z.uuid();
 
-const LEDGER_STATUS: Record<LedgerError, { status: ContentfulStatusCode; code: ErrorCode }> = {
-  not_found: { status: 401, code: 'unauthorized' },
-  insufficient_funds: { status: 422, code: 'insufficient_funds' },
-  idempotency_conflict: { status: 409, code: 'idempotency_conflict' },
-  refill_not_allowed: { status: 409, code: 'refill_not_allowed' },
-  busy: { status: 503, code: 'busy' },
-};
-
-const LEDGER_MESSAGES: Record<LedgerError, string> = {
-  not_found: 'Session expired. Reload to start a new one.',
-  insufficient_funds: 'Not enough balance for that bet.',
-  idempotency_conflict: 'This idempotency key was already used for a different bet.',
-  refill_not_allowed: 'Refills are only available when the balance is below the minimum bet.',
-  busy: 'Another request for this player is in progress. Retry with the same key.',
-};
-
 function errorResponse(
   c: Context,
   status: ContentfulStatusCode,
@@ -59,6 +43,11 @@ function errorResponse(
   message: string,
 ) {
   return c.json({ error, message }, status);
+}
+
+function ledgerError(c: Context, error: LedgerError) {
+  const { status, code, message } = LEDGER_ERRORS[error];
+  return errorResponse(c, status, code, message);
 }
 
 function describeIssues(error: z.core.$ZodError): string {
@@ -205,7 +194,7 @@ export function createApp(deps: AppDeps): Hono<Env> {
 
   app.get('/api/state', requireSession, async (c) => {
     const state = await players.state(c.get('playerId'));
-    if (!state) return errorResponse(c, 401, 'unauthorized', LEDGER_MESSAGES.not_found);
+    if (!state) return ledgerError(c, 'not_found');
     return c.json(state);
   });
 
@@ -226,10 +215,7 @@ export function createApp(deps: AppDeps): Hono<Env> {
       return errorResponse(c, 429, 'rate_limited', 'Too many bets. Slow down a little.');
     }
     const result = await players.bet(playerId, request.data, key.data);
-    if (!result.ok) {
-      const { status, code } = LEDGER_STATUS[result.error];
-      return errorResponse(c, status, code, LEDGER_MESSAGES[result.error]);
-    }
+    if (!result.ok) return ledgerError(c, result.error);
     return c.json(result.value, result.value.replayed ? 200 : 201);
   });
 
@@ -248,19 +234,13 @@ export function createApp(deps: AppDeps): Hono<Env> {
       return errorResponse(c, 400, 'bad_request', describeIssues(request.error));
     }
     const result = await players.rotateSeed(c.get('playerId'), request.data.clientSeed);
-    if (!result.ok) {
-      const { status, code } = LEDGER_STATUS[result.error];
-      return errorResponse(c, status, code, LEDGER_MESSAGES[result.error]);
-    }
+    if (!result.ok) return ledgerError(c, result.error);
     return c.json(result.value);
   });
 
   app.post('/api/balance/refill', requireSession, async (c) => {
     const result = await players.refill(c.get('playerId'));
-    if (!result.ok) {
-      const { status, code } = LEDGER_STATUS[result.error];
-      return errorResponse(c, status, code, LEDGER_MESSAGES[result.error]);
-    }
+    if (!result.ok) return ledgerError(c, result.error);
     return c.json(result.value);
   });
 

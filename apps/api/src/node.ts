@@ -7,12 +7,13 @@ import { serve } from '@hono/node-server';
 import { getConnInfo } from '@hono/node-server/conninfo';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { webSecurityHeaders } from '@drop-win/contract';
+import { Ledger } from '@drop-win/ledger';
 import * as z from 'zod/mini';
 import { createApp } from './app.ts';
 import { loadConfig } from './config.ts';
-import { Ledger } from './ledger.ts';
 import { openNodeSqlite } from './node-sqlite.ts';
 import { MemoryRateLimiter } from './rate-limit.ts';
+import { SqlStore } from './sql-store.ts';
 
 const NodeEnv = z.object({
   PORT: z._default(z.coerce.number().check(z.int(), z.gte(1), z.lte(65_535)), 5301),
@@ -36,7 +37,7 @@ const trustProxy = nodeEnv.TRUST_PROXY === 'true';
 
 const app = createApp({
   config,
-  players: new Ledger(db),
+  players: new Ledger(new SqlStore(db)),
   limiter: new MemoryRateLimiter(),
   clientIp: (c) => {
     // Only believe X-Forwarded-For behind a proxy that sets it; otherwise any

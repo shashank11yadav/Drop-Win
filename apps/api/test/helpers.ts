@@ -1,16 +1,25 @@
+import { Ledger, type LedgerOptions } from '@drop-win/ledger';
 import { createApp } from '../src/app.ts';
 import { loadConfig } from '../src/config.ts';
-import { Ledger } from '../src/ledger.ts';
 import { openNodeSqlite, type NodeSqlite } from '../src/node-sqlite.ts';
 import { MemoryRateLimiter, type RateLimiter } from '../src/rate-limit.ts';
+import { SqlStore } from '../src/sql-store.ts';
 
 export const TEST_SECRET = 'test-secret-that-is-long-enough-0123456789';
 export const ALLOWED_ORIGIN = 'https://play.example.com';
 
-export function makeLedger(): { db: NodeSqlite; ledger: Ledger } {
+export function makeLedger(options: LedgerOptions = {}): {
+  db: NodeSqlite;
+  store: SqlStore;
+  ledger: Ledger;
+} {
   const db = openNodeSqlite(':memory:');
-  return { db, ledger: new Ledger(db) };
+  const store = new SqlStore(db);
+  return { db, store, ledger: new Ledger(store, options) };
 }
+
+/** The same ledger on each kind of storage it runs on. */
+export const STORES = [{ name: 'sqlite', make: () => makeLedger() }] as const;
 
 export function makeApp(
   options: { env?: Record<string, string>; limiter?: RateLimiter; ip?: string } = {},

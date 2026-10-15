@@ -1,6 +1,7 @@
 import type { BetRequest } from '@drop-win/contract';
+import { Ledger } from '@drop-win/ledger';
 import { DurableObject } from 'cloudflare:workers';
-import { Ledger } from '../src/ledger.ts';
+import { SqlStore } from '../src/sql-store.ts';
 import { durableObjectSql } from './do-sql.ts';
 import type { WorkerEnv } from './env.ts';
 
@@ -14,7 +15,7 @@ export class PlayerVault extends DurableObject<WorkerEnv> {
 
   constructor(ctx: DurableObjectState, env: WorkerEnv) {
     super(ctx, env);
-    this.#ledger = new Ledger(durableObjectSql(ctx.storage));
+    this.#ledger = new Ledger(new SqlStore(durableObjectSql(ctx.storage)));
   }
 
   create(playerId: string) {

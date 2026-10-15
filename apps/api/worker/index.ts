@@ -2,9 +2,9 @@
 // platform; only /api/* reaches this code (see run_worker_first in wrangler.jsonc).
 
 import type { RateLimitName } from '@drop-win/contract';
+import type { PlayerStore } from '@drop-win/ledger';
 import { createApp } from '../src/app.ts';
 import { loadConfig } from '../src/config.ts';
-import type { PlayerStore } from '../src/ledger.ts';
 import type { RateLimiter } from '../src/rate-limit.ts';
 import type { WorkerEnv } from './env.ts';
 

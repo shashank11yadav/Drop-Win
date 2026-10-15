@@ -1,8 +1,8 @@
 import { HISTORY_PAGE_SIZE, MIN_BET_CENTS, STARTING_BALANCE_CENTS } from '@drop-win/contract';
 import { computeRound, payoutCents, sha256Hex } from '@drop-win/fairness';
 import { describe, expect, it } from 'vitest';
-import type { LedgerResult } from '../src/ledger.ts';
-import { makeLedger } from './helpers.ts';
+import type { LedgerResult, LedgerStore } from '@drop-win/ledger';
+import { STORES } from './helpers.ts';
 
 const PLAYER = '6a0f6d0e-6c39-4c2c-9f53-2c1f1b5f7a10';
 const bet = { amountCents: 100, rows: 16, risk: 'high' } as const;
@@ -12,32 +12,29 @@ function unwrap<T>(result: LedgerResult<T>): T {
   return result.value;
 }
 
-function activeServerSeed(db: ReturnType<typeof makeLedger>['db']): string {
-  const row = db.all<{ server_seed: string }>(
-    'SELECT server_seed FROM seeds WHERE player_id = ? AND revealed_at IS NULL',
-    PLAYER,
-  )[0];
-  if (!row) throw new Error('no active seed');
-  return row.server_seed;
+function activeServerSeed(store: LedgerStore): string {
+  const seed = store.activeSeed(PLAYER);
+  if (!seed) throw new Error('no active seed');
+  return seed.serverSeed;
 }
 
-describe('Ledger', () => {
+describe.each(STORES)('Ledger on $name', ({ make: makeLedger }) => {
   it('creates a player with the starting balance and only a hash of the server seed', async () => {
-    const { db, ledger } = makeLedger();
+    const { store, ledger } = makeLedger();
     const state = await ledger.create(PLAYER);
     expect(state.balanceCents).toBe(STARTING_BALANCE_CENTS);
     expect(state.seed.nonce).toBe(0);
-    expect(state.seed.serverSeedHash).toBe(await sha256Hex(activeServerSeed(db)));
-    expect(JSON.stringify(state)).not.toContain(activeServerSeed(db));
+    expect(state.seed.serverSeedHash).toBe(await sha256Hex(activeServerSeed(store)));
+    expect(JSON.stringify(state)).not.toContain(activeServerSeed(store));
   });
 
   it('settles a bet in one step and records exactly what the fairness package computes', async () => {
-    const { db, ledger } = makeLedger();
+    const { store, ledger } = makeLedger();
     const before = await ledger.create(PLAYER);
     const receipt = unwrap(await ledger.bet(PLAYER, bet, crypto.randomUUID()));
 
     const expected = await computeRound({
-      serverSeed: activeServerSeed(db),
+      serverSeed: activeServerSeed(store),
       clientSeed: before.seed.clientSeed,
       nonce: 0,
       rows: bet.rows,
@@ -75,9 +72,9 @@ describe('Ledger', () => {
   });
 
   it('never lets the balance go negative', async () => {
-    const { db, ledger } = makeLedger();
+    const { store, ledger } = makeLedger();
     await ledger.create(PLAYER);
-    db.run('UPDATE players SET balance_cents = ? WHERE id = ?', 250, PLAYER);
+    store.setBalance(PLAYER, 250);
 
     const results = await Promise.all(
       Array.from({ length: 10 }, () =>
@@ -102,16 +99,17 @@ describe('Ledger', () => {
     expect(state?.balanceCents).toBe(balance);
     expect(state?.seed.nonce).toBe(settled.length);
 
-    // The schema refuses a negative balance even if application code were wrong.
+    // Storage refuses a negative balance even if application code were wrong.
     expect(() => {
-      db.run('UPDATE players SET balance_cents = -1 WHERE id = ?', PLAYER);
-    }).toThrow(/CHECK constraint/);
+      store.setBalance(PLAYER, -1);
+    }).toThrow(/constraint failed/i);
+    expect((await ledger.state(PLAYER))?.balanceCents).toBe(balance);
   });
 
   it('rejects a bet larger than the balance without touching the nonce', async () => {
-    const { db, ledger } = makeLedger();
+    const { store, ledger } = makeLedger();
     await ledger.create(PLAYER);
-    db.run('UPDATE players SET balance_cents = 50 WHERE id = ?', PLAYER);
+    store.setBalance(PLAYER, 50);
     const result = await ledger.bet(PLAYER, bet, crypto.randomUUID());
     expect(result).toEqual({ ok: false, error: 'insufficient_funds' });
     expect((await ledger.state(PLAYER))?.seed.nonce).toBe(0);
@@ -179,12 +177,12 @@ describe('Ledger', () => {
   });
 
   it('keeps the new active seed hidden after rotation', async () => {
-    const { db, ledger } = makeLedger();
+    const { store, ledger } = makeLedger();
     await ledger.create(PLAYER);
     unwrap(await ledger.rotateSeed(PLAYER, 'next'));
     const receipt = unwrap(await ledger.bet(PLAYER, bet, crypto.randomUUID()));
     const page = await ledger.history(PLAYER);
-    const secret = activeServerSeed(db);
+    const secret = activeServerSeed(store);
     for (const payload of [receipt, page, await ledger.state(PLAYER)]) {
       expect(JSON.stringify(payload)).not.toContain(secret);
     }
@@ -207,10 +205,10 @@ describe('Ledger', () => {
   });
 
   it('refills only when the balance is below the minimum bet', async () => {
-    const { db, ledger } = makeLedger();
+    const { store, ledger } = makeLedger();
     await ledger.create(PLAYER);
     expect(await ledger.refill(PLAYER)).toEqual({ ok: false, error: 'refill_not_allowed' });
-    db.run('UPDATE players SET balance_cents = ? WHERE id = ?', MIN_BET_CENTS - 1, PLAYER);
+    store.setBalance(PLAYER, MIN_BET_CENTS - 1);
     expect((await ledger.state(PLAYER))?.canRefill).toBe(true);
     const state = unwrap(await ledger.refill(PLAYER));
     expect(state.balanceCents).toBe(STARTING_BALANCE_CENTS);
