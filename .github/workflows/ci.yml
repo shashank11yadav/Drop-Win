@@ -34,6 +34,7 @@ jobs:
       - run: npm run tables:check
       - run: npm test
       - run: npm run build
+      - run: npm run build:pages
       - run: npm audit --omit=dev --audit-level=high
 
   e2e:
@@ -51,6 +52,7 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run e2e
+      - run: npm run e2e:pages
       - if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
