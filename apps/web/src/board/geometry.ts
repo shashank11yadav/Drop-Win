@@ -18,8 +18,8 @@ export interface BoardGeometry {
   bucketWidth: number;
 }
 
-/** Below this peg spacing (px) a horizontal "37.9x" label no longer fits in a bucket. */
-export const NARROW_BUCKET = 30;
+/** Below this peg spacing (px) labels such as "37.9x" are drawn sideways in taller buckets. */
+export const NARROW_BUCKET = 40;
 
 export function layoutBoard(width: number, rows: number): BoardGeometry {
   const spacing = width / (rows + 2);

@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { PlayPage } from './game/PlayPage.tsx';
 import { useHashRoute } from './lib/route.ts';
 import { VerifyPage } from './verify/VerifyPage.tsx';
@@ -21,6 +22,11 @@ function Logo() {
 
 export function App() {
   const route = useHashRoute();
+  const page = route.page === 'verify' ? `verify?${route.query}` : 'play';
+  // Hash navigation keeps the scroll position; a new page should start at the top.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [page]);
   return (
     <>
       <a

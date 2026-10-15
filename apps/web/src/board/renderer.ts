@@ -32,14 +32,22 @@ function roundedRect(
   ctx.roundRect(x, y, w, h, r);
 }
 
-/** Sets the largest bold font (down to 7px) at which `text` fits in `maxWidth`. */
-function fitFont(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, maxSize: number) {
+/**
+ * One font for every label on the board: the largest size (down to 7px) at
+ * which the widest label still fits, so labels do not jump between sizes.
+ */
+function labelFont(
+  ctx: CanvasRenderingContext2D,
+  labels: string[],
+  maxWidth: number,
+  maxSize: number,
+) {
   let size = maxSize;
   for (; size > 7; size -= 0.5) {
     ctx.font = `700 ${String(size)}px system-ui, sans-serif`;
-    if (ctx.measureText(text).width <= maxWidth) return;
+    if (labels.every((label) => ctx.measureText(label).width <= maxWidth)) break;
   }
-  ctx.font = `700 ${String(size)}px system-ui, sans-serif`;
+  return `700 ${String(size)}px system-ui, sans-serif`;
 }
 
 export function drawScene(
@@ -65,6 +73,12 @@ export function drawScene(
 
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
+  const sideways = g.spacing < NARROW_BUCKET;
+  const labels = scene.table.map(formatMultiplier);
+  const font = sideways
+    ? labelFont(ctx, labels, g.bucketHeight - 4, Math.min(12, g.bucketWidth * 0.75))
+    : labelFont(ctx, labels, g.bucketWidth - 3, Math.min(13, g.bucketHeight * 0.45));
+  ctx.font = font;
   scene.table.forEach((hundredths, bucket) => {
     const lit = scene.litBuckets.get(bucket) ?? 0;
     const base = bucketColor(hundredths);
@@ -74,18 +88,16 @@ export function drawScene(
     roundedRect(ctx, x, y, g.bucketWidth, g.bucketHeight, Math.min(6, g.bucketWidth * 0.18));
     ctx.fillStyle = rgb(fill);
     ctx.fill();
-    const text = formatMultiplier(hundredths);
+    const text = labels[bucket] ?? '';
     ctx.fillStyle = rgb(labelColor(fill));
-    if (g.spacing < NARROW_BUCKET) {
+    if (sideways) {
       // Sideways labels in tall buckets keep exact values readable on phones.
       ctx.save();
       ctx.translate(x + g.bucketWidth / 2, y + g.bucketHeight / 2);
       ctx.rotate(-Math.PI / 2);
-      fitFont(ctx, text, g.bucketHeight - 4, Math.min(12, g.bucketWidth * 0.75));
       ctx.fillText(text, 0, 0.5);
       ctx.restore();
     } else {
-      fitFont(ctx, text, g.bucketWidth - 3, Math.min(13, g.bucketHeight * 0.45));
       ctx.fillText(text, x + g.bucketWidth / 2, y + g.bucketHeight / 2 + 0.5);
     }
   });

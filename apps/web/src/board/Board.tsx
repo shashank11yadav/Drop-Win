@@ -219,8 +219,15 @@ function markPegs(lit: Map<string, number>, trajectory: Trajectory, elapsed: num
 function buildTraceScene(g: BoardGeometry, path: string) {
   const trajectory = buildTrajectory(g, path);
   const points = [];
-  for (let t = 0; t <= trajectory.duration; t += 8) points.push(positionAt(trajectory, t));
-  const end = positionAt(trajectory, trajectory.duration);
+  // Stop the line where the ball reaches the bucket so its label stays readable.
+  const restY = g.bucketTop - g.ballRadius - 1;
+  for (let t = 0; t <= trajectory.duration; t += 8) {
+    const point = positionAt(trajectory, t);
+    if (point.y > restY) break;
+    points.push(point);
+  }
+  const landed = positionAt(trajectory, trajectory.duration);
+  const end = { x: landed.x, y: restY };
   points.push(end);
   return { points, end, bucket: trajectory.bucket };
 }
