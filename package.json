@@ -36,7 +36,7 @@
     "tables:check": "npm run tables:check -w @drop-win/fairness",
     "dev": "node scripts/dev.mjs",
     "build": "npm run build -w @drop-win/web && npm run build:worker -w @drop-win/api",
-    "start": "npm run build -w @drop-win/web && WEB_DIST=apps/web/dist npm run start -w @drop-win/api",
+    "start": "npm run build -w @drop-win/web && WEB_DIST=../web/dist npm run start -w @drop-win/api",
     "e2e": "playwright test"
   },
   "dependencies": {
