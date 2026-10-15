@@ -6,5 +6,5 @@
     "allowJs": true,
     "checkJs": false
   },
-  "include": ["*.ts", "*.js", "e2e", "scripts"]
+  "include": ["*.ts", "*.js", "e2e", "scripts", "test"]
 }

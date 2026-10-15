@@ -8,6 +8,7 @@ export default defineConfig({
       { test: { name: 'ledger', root: 'packages/ledger', include: ['test/**/*.test.ts'] } },
       { test: { name: 'api', root: 'apps/api', include: ['test/**/*.test.ts'] } },
       { test: { name: 'web', root: 'apps/web', include: ['test/**/*.test.ts'] } },
+      { test: { name: 'parity', root: '.', include: ['test/**/*.test.ts'] } },
     ],
   },
 });
