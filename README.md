@@ -199,7 +199,7 @@ See [SECURITY.md](SECURITY.md) for how to report a problem.
 Requires Node 24 or newer.
 
 ```sh
-git clone https://github.com/<you>/Drop-Win.git
+git clone https://github.com/shashank11yadav/Drop-Win.git
 cd Drop-Win
 npm ci
 npm run dev
