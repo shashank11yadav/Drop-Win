@@ -126,7 +126,7 @@ export function VerifyPage({ query }: { query: string }) {
   return (
     <main className="verify">
       <section className="panel" aria-labelledby="verify-heading">
-        <h2 id="verify-heading">Verify a round</h2>
+        <h1 id="verify-heading">Verify a round</h1>
         <p className="hint">
           Paste the revealed server seed, your client seed and the nonce. The result is recomputed
           here with Web Crypto: HMAC-SHA256(server seed, client seed:nonce), one bit per row, 1 for

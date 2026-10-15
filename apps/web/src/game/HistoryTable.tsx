@@ -80,9 +80,11 @@ export function HistoryTable({ bets, hasMore, onLoadMore }: HistoryTableProps) {
                         expectedPath: bet.path,
                         expectedMultiplier: bet.multiplierHundredths,
                       })}
-                      aria-label={`Verify bet with nonce ${String(bet.nonce)}`}
                     >
+                      {/* The visible word starts the accessible name, so voice control
+                          users can say what they see. */}
                       {bet.serverSeed ? 'Verify' : 'Details'}
+                      <span className="sr-only"> bet with nonce {bet.nonce}</span>
                     </a>
                   </td>
                 </tr>

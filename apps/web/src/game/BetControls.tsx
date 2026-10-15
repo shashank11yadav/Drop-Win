@@ -75,15 +75,15 @@ export function BetControls(props: BetControlsProps) {
           <button className="button" type="button" onClick={props.onHalf} aria-label="Halve bet">
             ½
           </button>
-          <button className="button" type="button" onClick={props.onDouble} aria-label="Double bet">
-            2×
-          </button>
           <button
             className="button"
             type="button"
-            onClick={props.onMax}
-            aria-label="Bet the maximum"
+            onClick={props.onDouble}
+            aria-label="2× (double bet)"
           >
+            2×
+          </button>
+          <button className="button" type="button" onClick={props.onMax} aria-label="Max bet">
             Max
           </button>
         </div>

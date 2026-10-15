@@ -195,6 +195,7 @@ export function PlayPage() {
 
   return (
     <main className="play">
+      <h1 className="sr-only">Play Drop-Win</h1>
       <section className="panel board-panel area-board" aria-label="Board">
         <Board
           rows={boardRows}

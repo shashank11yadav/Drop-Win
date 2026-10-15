@@ -20,7 +20,7 @@ test('places a bet, reveals the seed and verifies the round in the browser', asy
   await page.getByRole('button', { name: /Drop ball/ }).click();
 
   // The row appears once the ball has landed; the animation takes a few seconds.
-  const verifyLink = page.getByRole('link', { name: 'Verify bet with nonce 0' });
+  const verifyLink = page.getByRole('link', { name: /bet with nonce 0$/ });
   await expect(verifyLink).toBeVisible({ timeout: 10_000 });
   const row = page.getByRole('row').filter({ has: verifyLink });
   const paidMultiplier = await row.getByRole('cell').nth(-3).innerText();
@@ -29,7 +29,7 @@ test('places a bet, reveals the seed and verifies the round in the browser', asy
   await page.getByRole('button', { name: 'Reveal and rotate seeds' }).click();
   await expect(page.getByTestId('revealed-seed')).toBeVisible();
   await expect(page.getByTestId('server-seed-hash')).not.toHaveText(committedHash);
-  await expect(verifyLink).toHaveText('Verify');
+  await expect(verifyLink).toHaveText(/^Verify/);
 
   await verifyLink.click();
   await expect(page).toHaveURL(/#\/verify\?/);
@@ -53,7 +53,7 @@ test('Space drops a ball and reduced motion lands it at once', async ({ page }) 
   await page.goto('/');
   await expect(page.getByTestId('balance')).toHaveText('$1,000.00');
   await page.locator('body').press('Space');
-  await expect(page.getByRole('link', { name: 'Verify bet with nonce 0' })).toBeVisible({
+  await expect(page.getByRole('link', { name: /bet with nonce 0$/ })).toBeVisible({
     timeout: 2_000,
   });
   await expect(page.getByText(/^Landed on .+\. (Won|Lost) \$/)).toBeAttached();
