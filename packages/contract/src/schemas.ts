@@ -98,3 +98,10 @@ export type ErrorCode = (typeof ERROR_CODES)[number];
 
 export const ErrorBody = z.object({ error: z.enum(ERROR_CODES), message: z.string() });
 export type ErrorBody = z.infer<typeof ErrorBody>;
+
+/** One line per problem, used as the message of a bad_request error by every house. */
+export function describeIssues(error: z.core.$ZodError): string {
+  return error.issues
+    .map((issue) => (issue.path.length > 0 ? `${issue.path.join('.')}: ` : '') + issue.message)
+    .join('; ');
+}

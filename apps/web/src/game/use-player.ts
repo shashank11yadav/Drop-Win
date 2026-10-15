@@ -1,10 +1,11 @@
-import type { BetRequest } from '@drop-win/contract';
+import { type BetRequest, STARTING_BALANCE_CENTS } from '@drop-win/contract';
 import { useCallback, useEffect, useReducer, useRef } from 'react';
-import { api, ApiError } from '../lib/api.ts';
+import { backend, GameError, placeBet } from '../backend/index.ts';
+import { formatCents } from '../lib/money.ts';
 import { displayBalance, gameReducer, initialGameState } from './state.ts';
 
 function messageOf(error: unknown): string {
-  return error instanceof ApiError ? error.message : 'Something went wrong.';
+  return error instanceof GameError ? error.message : 'Something went wrong.';
 }
 
 export function usePlayer(onNotice: (message: string) => void) {
@@ -14,10 +15,18 @@ export function usePlayer(onNotice: (message: string) => void) {
     noticeRef.current = onNotice;
   });
 
+  useEffect(
+    () =>
+      backend.onNotice?.((message) => {
+        noticeRef.current(message);
+      }),
+    [],
+  );
+
   const load = useCallback(async () => {
     try {
-      const server = await api.session();
-      const page = await api.history();
+      const server = await backend.session();
+      const page = await backend.history();
       dispatch({ type: 'loaded', server, history: page.bets, nextBefore: page.nextBefore });
     } catch (error) {
       dispatch({ type: 'loadFailed', message: messageOf(error) });
@@ -28,15 +37,15 @@ export function usePlayer(onNotice: (message: string) => void) {
     void load();
   }, [load]);
 
-  const placeBet = useCallback(
+  const placeBetRequest = useCallback(
     async (request: BetRequest) => {
       dispatch({ type: 'betRequested' });
       try {
-        const receipt = await api.bet(request);
+        const receipt = await placeBet(backend, request);
         dispatch({ type: 'betSettled', bet: receipt.bet, server: receipt.state });
       } catch (error) {
         dispatch({ type: 'betFailed' });
-        if (error instanceof ApiError && error.status === 401) {
+        if (error instanceof GameError && error.status === 401) {
           noticeRef.current('Your session expired, so a new one was started.');
           void load();
           return;
@@ -53,8 +62,8 @@ export function usePlayer(onNotice: (message: string) => void) {
 
   const rotateSeed = useCallback(async (clientSeed: string) => {
     try {
-      const rotation = await api.rotateSeed(clientSeed);
-      const page = await api.history();
+      const rotation = await backend.rotateSeed(clientSeed);
+      const page = await backend.history();
       dispatch({
         type: 'seedRotated',
         server: rotation.state,
@@ -70,7 +79,7 @@ export function usePlayer(onNotice: (message: string) => void) {
 
   const refill = useCallback(async () => {
     try {
-      dispatch({ type: 'serverReplaced', server: await api.refill() });
+      dispatch({ type: 'serverReplaced', server: await backend.refill() });
     } catch (error) {
       noticeRef.current(messageOf(error));
     }
@@ -79,12 +88,25 @@ export function usePlayer(onNotice: (message: string) => void) {
   const loadOlder = useCallback(async () => {
     if (!state.nextBefore) return;
     try {
-      const page = await api.history(state.nextBefore);
+      const page = await backend.history(state.nextBefore);
       dispatch({ type: 'olderLoaded', bets: page.bets, nextBefore: page.nextBefore });
     } catch (error) {
       noticeRef.current(messageOf(error));
     }
   }, [state.nextBefore]);
+
+  const reset = useCallback(async () => {
+    if (!backend.reset) return;
+    try {
+      const server = await backend.reset();
+      dispatch({ type: 'loaded', server, history: [], nextBefore: null });
+      noticeRef.current(
+        `Demo reset: new seeds committed and the balance is back to ${formatCents(STARTING_BALANCE_CENTS)}.`,
+      );
+    } catch (error) {
+      noticeRef.current(messageOf(error));
+    }
+  }, []);
 
   const busy = state.pendingRequests > 0 || state.flights.length > 0;
 
@@ -93,10 +115,12 @@ export function usePlayer(onNotice: (message: string) => void) {
     displayBalance: displayBalance(state),
     busy,
     retry: load,
-    placeBet,
+    placeBet: placeBetRequest,
     land,
     rotateSeed,
     refill,
     loadOlder,
+    /** Only in browser mode, where the player owns the whole ledger. */
+    reset: backend.reset ? reset : undefined,
   };
 }

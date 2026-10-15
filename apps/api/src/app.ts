@@ -1,5 +1,6 @@
 import {
   BetRequest,
+  describeIssues,
   type ErrorCode,
   HistoryQuery,
   IdempotencyKey,
@@ -48,12 +49,6 @@ function errorResponse(
 function ledgerError(c: Context, error: LedgerError) {
   const { status, code, message } = LEDGER_ERRORS[error];
   return errorResponse(c, status, code, message);
-}
-
-function describeIssues(error: z.core.$ZodError): string {
-  return error.issues
-    .map((issue) => (issue.path.length > 0 ? `${issue.path.join('.')}: ` : '') + issue.message)
-    .join('; ');
 }
 
 async function readJson(c: Context): Promise<{ ok: true; value: unknown } | { ok: false }> {
