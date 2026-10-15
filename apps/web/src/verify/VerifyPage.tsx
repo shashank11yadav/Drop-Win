@@ -234,8 +234,8 @@ export function VerifyPage({ query }: { query: string }) {
                 </strong>
                 <span>
                   {pathMatches
-                    ? 'The recomputed path and multiplier match what the server paid.'
-                    : 'The recomputed result differs from what the server reported.'}
+                    ? 'The recomputed path and multiplier match what the house paid.'
+                    : 'The recomputed result differs from what the house reported.'}
                 </span>
               </p>
             )}
