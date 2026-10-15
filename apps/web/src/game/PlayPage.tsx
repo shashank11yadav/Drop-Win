@@ -250,6 +250,7 @@ export function PlayPage() {
             revealed={state.revealed}
             busy={busy}
             onRotate={player.rotateSeed}
+            onReset={player.reset}
           />
         </section>
       )}

@@ -37,6 +37,8 @@ const PAIRS: [string, string, number][] = [
   ['win', 'surface', 4.5],
   ['loss', 'surface', 4.5],
   ['focus', 'surface', 3],
+  // Links use the focus colour, including the demo banner's on surface-raised.
+  ['focus', 'surface-raised', 4.5],
   ['focus', 'bg', 3],
   ['board-peg', 'surface', 3],
   ['board-ball', 'surface', 3],

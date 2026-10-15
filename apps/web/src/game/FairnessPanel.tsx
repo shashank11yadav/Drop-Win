@@ -1,13 +1,58 @@
 import type { RevealedSeed, SeedCommitment } from '@drop-win/contract';
 import { CLIENT_SEED_PATTERN } from '@drop-win/contract';
 import { randomSeedHex } from '@drop-win/fairness';
-import { useId, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 
 interface FairnessPanelProps {
   seed: SeedCommitment;
   revealed: readonly RevealedSeed[];
   busy: boolean;
   onRotate: (clientSeed: string) => Promise<boolean>;
+  /** Browser mode only. */
+  onReset?: (() => Promise<void>) | undefined;
+}
+
+const CONFIRM_MS = 5000;
+
+function ResetDemo({ busy, onReset }: { busy: boolean; onReset: () => Promise<void> }) {
+  const [confirming, setConfirming] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  useEffect(() => {
+    if (!confirming) return;
+    const timer = setTimeout(() => {
+      setConfirming(false);
+    }, CONFIRM_MS);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [confirming]);
+
+  return (
+    <div className="demo-reset">
+      <p className="hint">
+        This demo is saved in your browser. Resetting deletes its history and seeds and starts over
+        with fresh ones.
+      </p>
+      <button
+        className="button small"
+        type="button"
+        disabled={busy || resetting}
+        onClick={() => {
+          if (!confirming) {
+            setConfirming(true);
+            return;
+          }
+          setConfirming(false);
+          setResetting(true);
+          void onReset().finally(() => {
+            setResetting(false);
+          });
+        }}
+      >
+        {confirming ? 'Click again to reset' : 'Reset demo'}
+      </button>
+    </div>
+  );
 }
 
 function CopyButton({ text, label }: { text: string; label: string }) {
@@ -31,7 +76,7 @@ function CopyButton({ text, label }: { text: string; label: string }) {
   );
 }
 
-export function FairnessPanel({ seed, revealed, busy, onRotate }: FairnessPanelProps) {
+export function FairnessPanel({ seed, revealed, busy, onRotate, onReset }: FairnessPanelProps) {
   const id = useId();
   const [clientSeed, setClientSeed] = useState(() => randomSeedHex(8));
   const [rotating, setRotating] = useState(false);
@@ -42,8 +87,8 @@ export function FairnessPanel({ seed, revealed, busy, onRotate }: FairnessPanelP
     <>
       <h2 id="fairness-heading">Provably fair</h2>
       <p className="hint">
-        The server committed to its seed before your first bet by showing you its SHA-256 hash.
-        Rotating reveals the seed so every bet made with it can be checked.
+        The house committed to its server seed before your first bet by showing you its SHA-256
+        hash. Rotating reveals the seed so every bet made with it can be checked.
       </p>
       <dl className="kv">
         <div>
@@ -112,6 +157,8 @@ export function FairnessPanel({ seed, revealed, busy, onRotate }: FairnessPanelP
           <p className="hint">The Verify links in your history now include it.</p>
         </div>
       )}
+
+      {onReset && <ResetDemo busy={busy} onReset={onReset} />}
     </>
   );
 }

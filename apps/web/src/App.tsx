@@ -1,7 +1,22 @@
 import { useEffect } from 'react';
+import { backend } from './backend/index.ts';
 import { PlayPage } from './game/PlayPage.tsx';
 import { useHashRoute } from './lib/route.ts';
 import { VerifyPage } from './verify/VerifyPage.tsx';
+
+const TWO_MODES = 'https://github.com/shashank11yadav/Drop-Win#two-modes';
+
+function DemoBanner() {
+  return (
+    <aside className="demo-banner" aria-label="Demo mode">
+      <p>
+        <strong>Demo mode:</strong> the house runs in your browser, so this shows how commit-reveal
+        works but can't stop a dishonest house. The server version (Cloudflare Worker) keeps the
+        seed out of your reach. Play money only. <a href={TWO_MODES}>How the two modes differ</a>
+      </p>
+    </aside>
+  );
+}
 
 function Logo() {
   return (
@@ -40,6 +55,7 @@ export function App() {
         Skip to content
       </a>
       <div className="shell">
+        {backend.mode === 'browser' && <DemoBanner />}
         <header className="site-header">
           <a className="brand" href="#/">
             <Logo />

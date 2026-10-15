@@ -116,6 +116,20 @@ code,
   padding: 0 16px;
 }
 
+.demo-banner {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 10px;
+  background: var(--surface-raised);
+  font-size: 0.88rem;
+}
+
+.demo-banner p {
+  margin: 0;
+}
+
 .site-header {
   display: flex;
   align-items: center;
@@ -472,6 +486,15 @@ input[type='range'] {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.demo-reset {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
 }
 
 .revealed {
