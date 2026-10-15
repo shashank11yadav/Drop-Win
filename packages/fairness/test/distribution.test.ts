@@ -3,6 +3,8 @@ import { bucketProbabilities, hmacSha256, pathFromDigest, bucketFromPath } from 
 import { chiSquare } from '../scripts/chi-square.ts';
 
 const DROPS = 100_000;
+// 100k Web Crypto HMACs take about 2s on a laptop but over 5s on a shared CI runner.
+const SIMULATION_TIMEOUT_MS = 60_000;
 
 async function simulate(rows: number): Promise<number[]> {
   const counts = new Array<number>(rows + 1).fill(0);
@@ -18,11 +20,15 @@ async function simulate(rows: number): Promise<number[]> {
 
 describe('bucket distribution over 100k drops', () => {
   for (const rows of [8, 16]) {
-    it(`matches Binomial(${String(rows)}, 1/2) by chi-square at p = 0.001`, async () => {
-      const counts = await simulate(rows);
-      const result = chiSquare(counts, bucketProbabilities(rows));
-      expect(result.statistic).toBeLessThan(result.critical);
-    });
+    it(
+      `matches Binomial(${String(rows)}, 1/2) by chi-square at p = 0.001`,
+      async () => {
+        const counts = await simulate(rows);
+        const result = chiSquare(counts, bucketProbabilities(rows));
+        expect(result.statistic).toBeLessThan(result.critical);
+      },
+      SIMULATION_TIMEOUT_MS,
+    );
   }
 });
 
