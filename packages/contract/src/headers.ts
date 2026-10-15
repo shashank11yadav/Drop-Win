@@ -29,3 +29,25 @@ export function webSecurityHeaders(apiOrigin?: string): Record<string, string> {
     'X-Frame-Options': 'DENY',
   };
 }
+
+/**
+ * Policy for the static browser-mode build, delivered in a <meta> tag because
+ * GitHub Pages cannot send headers. A meta policy cannot carry frame-ancestors,
+ * so framing protection is the one thing it loses compared with the header.
+ * The house worker is loaded from the same origin and the page makes no
+ * network requests, so everything is 'self'.
+ */
+export function staticPageCsp(): string {
+  return [
+    "default-src 'self'",
+    "script-src 'self'",
+    "style-src 'self'",
+    "img-src 'self' data:",
+    "font-src 'self'",
+    "connect-src 'self'",
+    "worker-src 'self'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'none'",
+  ].join('; ');
+}

@@ -1,4 +1,4 @@
-import { webSecurityHeaders } from '@drop-win/contract';
+import { staticPageCsp, webSecurityHeaders } from '@drop-win/contract';
 import react from '@vitejs/plugin-react';
 import { defineConfig, loadEnv, type Plugin } from 'vite';
 
@@ -22,18 +22,58 @@ function headersFile(apiBase: string): Plugin {
   };
 }
 
-export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, '../..', 'VITE_');
-  const apiBase = env['VITE_API_BASE'] ?? '';
+/**
+ * GitHub Pages cannot send headers, so the static build carries its CSP and
+ * referrer policy in meta tags. Build only: the dev server injects an inline
+ * script for hot reload, which this policy would block.
+ */
+function metaPolicies(): Plugin {
+  const charset = '<meta charset="UTF-8" />';
+  const policies = [
+    `<meta http-equiv="Content-Security-Policy" content="${staticPageCsp()}" />`,
+    '<meta name="referrer" content="no-referrer" />',
+  ];
   return {
-    envDir: '../..',
-    plugins: [react(), headersFile(apiBase)],
-    server: {
-      port: 5300,
-      strictPort: true,
-      proxy: { '/api': 'http://127.0.0.1:5301' },
+    name: 'drop-win-meta-policies',
+    apply: 'build',
+    transformIndexHtml: {
+      order: 'post',
+      // Right after the charset and before every script, so nothing loads unchecked.
+      handler(html) {
+        if (!html.includes(charset)) throw new Error('index.html is missing its charset meta tag');
+        return html.replace(charset, [charset, ...policies].join('\n    '));
+      },
     },
-    preview: { port: 5300, strictPort: true },
-    build: { target: 'es2022', sourcemap: true },
+  };
+}
+
+/**
+ * Modes:
+ * - default: the API is the house (npm run dev, the Worker deploy).
+ * - browser: the house runs in a Web Worker in the page, with no server.
+ * - pages: browser mode built for https://<user>.github.io/Drop-Win/.
+ */
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, '../..', ['VITE_', 'WEB_PORT', 'API_PORT']);
+  const pages = mode === 'pages';
+  const browser = pages || mode === 'browser' || env['VITE_BACKEND'] === 'browser';
+  const apiBase = browser ? '' : (env['VITE_API_BASE'] ?? '');
+  const port = Number(env['WEB_PORT'] ?? (browser ? 5310 : 5300));
+  return {
+    base: pages ? '/Drop-Win/' : '/',
+    envDir: '../..',
+    define: {
+      'import.meta.env.VITE_BACKEND': JSON.stringify(browser ? 'browser' : 'server'),
+      'import.meta.env.VITE_API_BASE': JSON.stringify(apiBase),
+    },
+    plugins: [react(), browser ? metaPolicies() : headersFile(apiBase)],
+    server: {
+      port,
+      strictPort: true,
+      ...(browser ? {} : { proxy: { '/api': `http://127.0.0.1:${env['API_PORT'] ?? '5301'}` } }),
+    },
+    preview: { port, strictPort: true },
+    worker: { format: 'es' },
+    build: { target: 'es2022', sourcemap: true, outDir: pages ? 'dist-pages' : 'dist' },
   };
 });

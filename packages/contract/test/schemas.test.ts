@@ -6,6 +6,7 @@ import {
   MAX_BET_CENTS,
   MIN_BET_CENTS,
   RotateSeedRequest,
+  staticPageCsp,
   webSecurityHeaders,
 } from '../src/index.ts';
 
@@ -63,5 +64,24 @@ describe('webSecurityHeaders', () => {
     expect(csp).toContain("script-src 'self'");
     expect(csp).toContain("connect-src 'self' https://api.example.com");
     expect(csp).not.toContain('unsafe-inline');
+  });
+});
+
+describe('staticPageCsp', () => {
+  it('keeps the meta-tag policy same-origin and free of directives a meta tag ignores', () => {
+    const csp = staticPageCsp();
+    for (const directive of [
+      "default-src 'self'",
+      "script-src 'self'",
+      "style-src 'self'",
+      "connect-src 'self'",
+      "worker-src 'self'",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'none'",
+    ]) {
+      expect(csp).toContain(directive);
+    }
+    expect(csp).not.toMatch(/unsafe-|frame-ancestors|report-uri|sandbox|https?:/);
   });
 });

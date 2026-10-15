@@ -6,8 +6,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:browser": "vite --mode browser",
     "build": "vite build",
+    "build:pages": "vite build --mode pages",
     "preview": "vite preview",
+    "preview:pages": "vite preview --mode pages",
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
