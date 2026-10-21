@@ -78,8 +78,13 @@ export function App() {
           )}
         </div>
         <footer className="site-footer">
-          Play money only. There is no real-money, deposit or crypto feature, and balances have no
-          value.
+          <p>
+            Play money only. There is no real-money, deposit or crypto feature, and balances have no
+            value.
+          </p>
+          <p>
+            By Shashank Yadav · <a href="https://www.shashankyadav.dev/#work">shashankyadav.dev</a>
+          </p>
         </footer>
       </div>
     </>

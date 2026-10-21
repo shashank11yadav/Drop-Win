@@ -6,6 +6,8 @@ A provably fair ball-drop game where every result is committed before you bet an
 
 **Live demo:** [shashank11yadav.github.io/Drop-Win](https://shashank11yadav.github.io/Drop-Win/). This is browser mode: the house runs in a Web Worker in your tab, so the demo shows how commit-reveal works but cannot keep the seed from you or stop a dishonest house. [Two modes](#two-modes) explains the difference, and the server version [runs locally](#server-mode-with-node) with `npm run dev`.
 
+More of my projects: [shashankyadav.dev](https://www.shashankyadav.dev/#work)
+
 **Play money only.** Balances are pretend dollars with no value. There are no deposits, withdrawals, payments, real-money or crypto features, and none are planned.
 
 ## Contents

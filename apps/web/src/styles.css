@@ -243,6 +243,14 @@ code,
   text-align: center;
 }
 
+.site-footer p {
+  margin: 0;
+}
+
+.site-footer p + p {
+  margin-top: 6px;
+}
+
 /* Controls */
 
 .balance {
