@@ -19,3 +19,7 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    # codeql-action init and analyze must stay on the same version, so update actions together.
+    groups:
+      actions:
+        patterns: ['*']
