@@ -6,6 +6,9 @@ updates:
       - dependency-name: typescript
         update-types: ['version-update:semver-major']
     directory: /
+    cooldown:
+      default-days: 3
+      semver-major-days: 7
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
@@ -17,6 +20,9 @@ updates:
 
   - package-ecosystem: github-actions
     directory: /
+    cooldown:
+      default-days: 3
+      semver-major-days: 7
     schedule:
       interval: weekly
     # codeql-action init and analyze must stay on the same version, so update actions together.
